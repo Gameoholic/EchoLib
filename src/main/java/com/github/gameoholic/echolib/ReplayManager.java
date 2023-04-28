@@ -1,8 +1,5 @@
 package com.github.gameoholic.echolib;
 
-import com.github.gameoholic.echolib.echo.EchoReplay;
-import org.bukkit.entity.Player;
-
 /**
  * Represents an API for accessing and creating Echo replays
  *

@@ -1,11 +1,9 @@
 package com.github.gameoholic.echolib.echo;
 
 import com.github.gameoholic.echolib.Replay;
-import com.github.gameoholic.echolib.ReplayBuilder;
 import com.github.gameoholic.echolib.ReplayManager;
-import org.bukkit.entity.Player;
 
-public class EchoReplayManager implements ReplayManager {
+public class ReplayManagerImpl implements ReplayManager {
 
     @Override
     public Replay searchReplay(int id) {

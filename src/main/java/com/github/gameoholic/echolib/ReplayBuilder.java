@@ -1,14 +1,12 @@
 package com.github.gameoholic.echolib;
 
-import com.github.gameoholic.echolib.echo.EchoReplay;
-
-import java.util.UUID;
+import com.github.gameoholic.echolib.echo.ReplayImpl;
 
 public class ReplayBuilder {
     //Required attributes:
-    public String foo;
+    private String foo;
     //Optional attributes:
-    public String bar;
+    private String bar;
 
     public ReplayBuilder(String foo) {
         this.foo = foo;
@@ -20,7 +18,7 @@ public class ReplayBuilder {
     }
 
     public Replay build() {
-        Replay replay = new EchoReplay(this);
+        Replay replay = new ReplayImpl(foo, bar);
         validateReplayObject(replay);
         return replay;
     }
