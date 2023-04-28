@@ -1,5 +1,11 @@
 package com.github.gameoholic.echolib.commands;
 
+import com.github.gameoholic.echolib.EchoLib;
+import com.github.gameoholic.echolib.Replay;
+import com.github.gameoholic.echolib.ReplayBuilder;
+import com.github.gameoholic.echolib.ReplayManager;
+import com.github.gameoholic.echolib.echo.EchoReplay;
+import com.github.gameoholic.echolib.echo.EchoReplayManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -17,7 +23,12 @@ public class TestCommand implements CommandExecutor {
             }
         }
 
-        sender.sendMessage(ChatColor.RED + "Test.");
+        EchoReplayManager replayManager = new EchoReplayManager();
+
+        Replay replay = new ReplayBuilder("foo")
+            .withBar("bar")
+            .build();
+
         return true;
     }
 }
