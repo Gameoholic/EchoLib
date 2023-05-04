@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public class ReplayImpl implements Replay {
     private final UUID id;
-    private final int version; //Replay API version. Will update only when Replay code is changed.
+    private final int version; //Replay File version. Will update only when Replay code is changed.
     private boolean isRecording;
     private String foo;
     private String bar;
@@ -16,7 +16,7 @@ public class ReplayImpl implements Replay {
         this.bar = bar;
 
         id = UUID.randomUUID();
-        version = EchoLib.replayAPIVersion;
+        version = EchoLib.replayFileVersion;
         isRecording = false;
     }
 
