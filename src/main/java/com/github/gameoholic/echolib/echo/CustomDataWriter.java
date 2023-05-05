@@ -15,7 +15,6 @@ public class CustomDataWriter {
         this.file = file;
     }
 
-
     /**
      Writes a specified number of bits from the given input integer to the output stream.
 

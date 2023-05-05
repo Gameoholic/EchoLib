@@ -58,7 +58,6 @@ public class MapDownloaderImpl implements MapDownloader {
             throw new RuntimeException(e);
         }
 
-
         //-----FILE HEADERS-----:
 
         //Version header:
@@ -93,6 +92,9 @@ public class MapDownloaderImpl implements MapDownloader {
         //Block data headers, describes how the data for each block is structured:
         //2 bytes - datatype ID, 2 bytes - length in bits
 
+        //0 - type
+        //1 - biome
+
         //REQUIRED:
         add2ByteHeader(0); //datatype ID - 0 (type)
         add2ByteHeader(11); //data length - 11 bits
@@ -101,7 +103,6 @@ public class MapDownloaderImpl implements MapDownloader {
             add2ByteHeader(1); //datatype ID - 1 (biome)
             add2ByteHeader(7); //data length - 7 bits
         }
-
 
 
         //-----DOWNLOAD BLOCKS-----:
@@ -113,6 +114,9 @@ public class MapDownloaderImpl implements MapDownloader {
         CustomDataWriter dataWriter = new CustomDataWriter(file);
 
         int airBlocksSkipped = 0;
+        int mostAirBlocks = 0;
+        int totalAirBlocks = 0;
+        int airBlockClusters = 0;
         for (int x = cornerCoords.getBlockX(); x > cornerCoords.getBlockX() - size.getBlockX(); x--) {
             for (int z = cornerCoords.getBlockZ(); z > cornerCoords.getBlockZ() - size.getBlockZ(); z--) {
                 for (int y = cornerCoords.getBlockY(); y < cornerCoords.getBlockY() + size.getBlockY(); y++) {
@@ -121,15 +125,28 @@ public class MapDownloaderImpl implements MapDownloader {
                         airBlocksSkipped++;
                         continue;
                     }
+
                     else if (airBlocksSkipped > 0) {
+                        airBlockClusters += 1;
+                        dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count
                         dataWriter.writeBits(airBlocksSkipped, 32); //TODO: Optimize this
+                        totalAirBlocks += airBlocksSkipped;
+                        if (airBlocksSkipped > mostAirBlocks)
+                            mostAirBlocks = airBlocksSkipped;
                         airBlocksSkipped = 0;
                     }
+
+                    //01
+                    //
+
                     writeBlockData(block, dataWriter);
                 }
             }
         }
 
+        Bukkit.broadcastMessage(totalAirBlocks + " is total");
+        Bukkit.broadcastMessage(mostAirBlocks + " is most");
+        Bukkit.broadcastMessage(airBlockClusters + " clusters");
 
         dataWriter.writeByte(); //Write last byte, even if it's not full
         dataWriter.writeBytesToFile(); //Write all bytes to file
@@ -141,6 +158,8 @@ public class MapDownloaderImpl implements MapDownloader {
          * type: 11 bits
          * biome: 7 bits
          */
+
+        dataWriter.writeBits(0, 1); //The first bit indicates whether it's a block, or air block count
 
         //Type: (11 bits)
         Material material = block.getType();

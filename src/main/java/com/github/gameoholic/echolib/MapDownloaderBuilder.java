@@ -66,8 +66,10 @@ public class MapDownloaderBuilder {
             throw new IllegalArgumentException("World must not be null.");
         if (cornerCoords == null)
             throw new IllegalArgumentException("Corner coords must not be null.");
-        if (size == null)
-            throw new IllegalArgumentException("Size must not be null.");
+        if (size == null) //TODO: make sure size is correct and doesn't go out of impossible bounds
+            throw new IllegalArgumentException("Size is invalid or null.");
+        if (size.getBlockX() > 2048 || size.getBlockY() > 512 || size.getBlockZ() > 2048)
+            throw new IllegalArgumentException("Size exceeds limit.");
         if (!StandardCharsets.UTF_8.newEncoder().canEncode(name))
             throw new IllegalArgumentException("Map name must be encoded in UTF-8.");
         if (!StandardCharsets.UTF_8.newEncoder().canEncode(description))

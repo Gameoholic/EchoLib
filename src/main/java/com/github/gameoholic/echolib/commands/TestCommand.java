@@ -25,8 +25,6 @@ public class TestCommand implements CommandExecutor {
 
         ReplayManager replayManager = EchoLib.replayManager;
 
-
-
         Replay replay = new ReplayBuilder("foo")
             .withBar("bar")
             .build();
