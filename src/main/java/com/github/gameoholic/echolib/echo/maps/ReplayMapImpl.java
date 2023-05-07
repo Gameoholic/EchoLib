@@ -133,13 +133,13 @@ public class ReplayMapImpl implements ReplayMap {
         Boolean isBlock = readBitsFromFile(1) == 0; //The first bit indicates whether it's a block, or air block count
         if (isBlock) {
             Material type = Material.values()[readBitsFromFile(11)];
-            //System.out.println("Block type " + type + " is of biome " + Biome.values()[readBitsFromFile(7)]);
+            System.out.println("Block type " + type + " is of biome " + Biome.values()[readBitsFromFile(7)]);
             Bukkit.getWorlds().get(0).getBlockAt(cornerCoordsX - currentX, cornerCoordsY + currentY, cornerCoordsZ - currentZ).setType(type);
             incrementBlocks(1);
         }
         else {
             int airBlocks = readBitsFromFile(32);
-            //System.out.println("Blocks of air are " + airBlocks);
+            System.out.println("Blocks of air are " + airBlocks);
             incrementBlocks(airBlocks);
         }
 
