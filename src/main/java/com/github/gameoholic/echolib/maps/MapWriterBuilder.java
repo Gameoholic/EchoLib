@@ -1,13 +1,13 @@
-package com.github.gameoholic.echolib;
+package com.github.gameoholic.echolib.maps;
 
-import com.github.gameoholic.echolib.echo.MapDownloaderImpl;
+import com.github.gameoholic.echolib.echo.maps.MapWriterImpl;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
 import java.nio.charset.StandardCharsets;
 
 
-public class MapDownloaderBuilder {
+public class MapWriterBuilder {
     //Required attributes:
     private World world;
     private Vector cornerCoords;
@@ -32,7 +32,7 @@ public class MapDownloaderBuilder {
       * Name and description are encoded in UTF-8.
       * Name and description length must be between 1-65536 bytes.
      */
-    public MapDownloaderBuilder(String name, String description, World world, Vector cornerCoords, Vector size) {
+    public MapWriterBuilder(String name, String description, World world, Vector cornerCoords, Vector size) {
         this.name = name;
         this.description = description;
         this.world = world;
@@ -46,18 +46,18 @@ public class MapDownloaderBuilder {
      Sets whether to download the biome data for each block in the selected area.
      Default is false.
     */
-     public MapDownloaderBuilder withDownloadBlockBiome(Boolean downloadBlockBiome) {
+     public MapWriterBuilder withDownloadBlockBiome(Boolean downloadBlockBiome) {
         this.downloadBlockBiome = downloadBlockBiome;
         return this;
      }
 
-    public MapDownloader build() {
-        MapDownloader mapDownloader = new MapDownloaderImpl(name, description, world, cornerCoords, size, downloadBlockBiome);
+    public MapWriter build() {
+        MapWriter mapDownloader = new MapWriterImpl(name, description, world, cornerCoords, size, downloadBlockBiome);
         validateMapDownloaderObject(mapDownloader);
         return mapDownloader;
     }
 
-    private void validateMapDownloaderObject(MapDownloader mapDownloader) {
+    private void validateMapDownloaderObject(MapWriter mapDownloader) {
         if (name == null || name.length() < 1 || name.length() > 65536)
             throw new IllegalArgumentException("Map name must be between 1-65536 characters.");
         if (description == null || description.length() < 1 || description.length() > 65536)

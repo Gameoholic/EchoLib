@@ -1,8 +1,10 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   `java-library`
   id("io.papermc.paperweight.userdev") version "1.5.4"
   id("xyz.jpenilla.run-paper") version "2.0.1" // Adds runServer and runMojangMappedServer tasks for testing
+  kotlin("jvm") version "1.8.21"
 }
 
 group = "com.github.gameoholic.echolib"
@@ -18,6 +20,7 @@ dependencies {
   paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT") //the paper dev bundle is a compile-only dependency, paper itself provides it. No need to shade
   // paperweight.foliaDevBundle("1.19.4-R0.1-SNAPSHOT")
   // paperweight.devBundle("com.example.paperfork", "1.19.4-R0.1-SNAPSHOT")
+  implementation(kotlin("stdlib-jdk8"))
 }
 
 
@@ -58,3 +61,14 @@ tasks {
 
 }
 
+repositories {
+  mavenCentral()
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+  jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+  jvmTarget = "1.8"
+}

@@ -1,9 +1,7 @@
-package com.github.gameoholic.echolib.echo;
+package com.github.gameoholic.echolib.echo.maps;
 
 import com.github.gameoholic.echolib.EchoLib;
-import com.github.gameoholic.echolib.MapDownloader;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import com.github.gameoholic.echolib.maps.MapWriter;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -15,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 
-public class MapDownloaderImpl implements MapDownloader {
+public class MapWriterImpl implements MapWriter {
 
     //Parameters:
     private UUID id;
@@ -29,7 +27,7 @@ public class MapDownloaderImpl implements MapDownloader {
     //Private members:
     private File file;
     private final int version; //Map file version. Will update only when Map code is changed.
-    public MapDownloaderImpl(String name, String description, World world, Vector cornerCoords, Vector size, boolean downloadBlockBiome) {
+    public MapWriterImpl(String name, String description, World world, Vector cornerCoords, Vector size, boolean downloadBlockBiome) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.description = description;
@@ -79,7 +77,7 @@ public class MapDownloaderImpl implements MapDownloader {
         //Description header:
         writeStringToFile(description);
 
-        //centerCoords header:
+        //cornerCoords header:
         writeIntegerToFile(cornerCoords.getBlockX());
         writeIntegerToFile(cornerCoords.getBlockY());
         writeIntegerToFile(cornerCoords.getBlockZ());
@@ -92,17 +90,17 @@ public class MapDownloaderImpl implements MapDownloader {
         //Block data headers, describes how the data for each block is structured:
         //2 bytes - datatype ID, 2 bytes - length in bits
 
-        //0 - type
-        //1 - biome
-
         //REQUIRED:
-        add2ByteHeader(0); //datatype ID - 0 (type)
+        add2ByteHeader(BlockDataTypeID.TYPE.getValue()); //datatype ID - 0 (type)
         add2ByteHeader(11); //data length - 11 bits
 
         if (downloadBlockBiome) {
-            add2ByteHeader(1); //datatype ID - 1 (biome)
+            add2ByteHeader(BlockDataTypeID.BIOME.getValue()); //datatype ID - 1 (biome)
             add2ByteHeader(7); //data length - 7 bits
         }
+
+        //Indicate that the rest of the file is for the block data
+        add2ByteHeader(BlockDataTypeID.INVALID.getValue());
 
 
         //-----DOWNLOAD BLOCKS-----:
@@ -114,9 +112,6 @@ public class MapDownloaderImpl implements MapDownloader {
         CustomDataWriter dataWriter = new CustomDataWriter(file);
 
         int airBlocksSkipped = 0;
-        int mostAirBlocks = 0;
-        int totalAirBlocks = 0;
-        int airBlockClusters = 0;
         for (int x = cornerCoords.getBlockX(); x > cornerCoords.getBlockX() - size.getBlockX(); x--) {
             for (int z = cornerCoords.getBlockZ(); z > cornerCoords.getBlockZ() - size.getBlockZ(); z--) {
                 for (int y = cornerCoords.getBlockY(); y < cornerCoords.getBlockY() + size.getBlockY(); y++) {
@@ -127,26 +122,20 @@ public class MapDownloaderImpl implements MapDownloader {
                     }
 
                     else if (airBlocksSkipped > 0) {
-                        airBlockClusters += 1;
                         dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count
                         dataWriter.writeBits(airBlocksSkipped, 32); //TODO: Optimize this
-                        totalAirBlocks += airBlocksSkipped;
-                        if (airBlocksSkipped > mostAirBlocks)
-                            mostAirBlocks = airBlocksSkipped;
                         airBlocksSkipped = 0;
                     }
-
-                    //01
-                    //
 
                     writeBlockData(block, dataWriter);
                 }
             }
         }
 
-        Bukkit.broadcastMessage(totalAirBlocks + " is total");
-        Bukkit.broadcastMessage(mostAirBlocks + " is most");
-        Bukkit.broadcastMessage(airBlockClusters + " clusters");
+        if (airBlocksSkipped > 0) { //If last block is air the loop exits out without writing the data
+            dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count
+            dataWriter.writeBits(airBlocksSkipped, 32); //TODO: Optimize this
+        }
 
         dataWriter.writeByte(); //Write last byte, even if it's not full
         dataWriter.writeBytesToFile(); //Write all bytes to file

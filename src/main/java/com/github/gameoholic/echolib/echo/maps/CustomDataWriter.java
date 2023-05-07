@@ -1,4 +1,4 @@
-package com.github.gameoholic.echolib.echo;
+package com.github.gameoholic.echolib.echo.maps;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,9 +49,6 @@ public class CustomDataWriter {
     //Returns bit number X from the right. For example: for 0b1101 0111 and X=4 will return 0
     private byte getXBitFromRight(int input, int X) {
         return (byte) ((input >>> (X - 1)) & 0x01);
-    }
-    private void printByte() {
-        System.out.println(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
     }
 
     //Adds the byte to the byte list. Should be called per full byte written to, and once after the entire byte writing process is finished.
