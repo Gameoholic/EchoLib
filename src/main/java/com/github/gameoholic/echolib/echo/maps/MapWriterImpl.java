@@ -11,6 +11,7 @@ import org.bukkit.util.Vector;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class MapWriterImpl implements MapWriter {
@@ -22,19 +23,26 @@ public class MapWriterImpl implements MapWriter {
     private World world;
     private Vector cornerCoords; //Positive x-z corner (south-east)
     private Vector size;
-    private Boolean downloadBlockBiome;
+    //Which optional/conditional block data to write:
+    private HashMap<BlockDataType, Boolean> writeBlockDataArguments; //ALL optional/conditional arguments
+    public HashMap<BlockDataType, Boolean> getWriteBlockDataArguments() {
+        return writeBlockDataArguments;
+    }
 
     //Private members:
     private File file;
+    private CustomDataWriter dataWriter;
     private final int version; //Map file version. Will update only when Map code is changed.
-    public MapWriterImpl(String name, String description, World world, Vector cornerCoords, Vector size, boolean downloadBlockBiome) {
+    public MapWriterImpl(String name, String description, World world, Vector cornerCoords, Vector size,
+                         HashMap<BlockDataType, Boolean> writeBlockDataArguments) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.description = description;
         this.world = world;
         this.cornerCoords = cornerCoords;
         this.size = size;
-        this.downloadBlockBiome = downloadBlockBiome;
+
+        this.writeBlockDataArguments = writeBlockDataArguments;
 
         this.version = EchoLib.mapFileVersion;
     }
@@ -90,17 +98,14 @@ public class MapWriterImpl implements MapWriter {
         //Block data headers, describes how the data for each block is structured:
         //2 bytes - datatype ID, 2 bytes - length in bits
 
-        //REQUIRED:
-        add2ByteHeader(BlockDataTypeID.TYPE.getValue()); //datatype ID - 0 (type)
-        add2ByteHeader(11); //data length - 11 bits
-
-        if (downloadBlockBiome) {
-            add2ByteHeader(BlockDataTypeID.BIOME.getValue()); //datatype ID - 1 (biome)
-            add2ByteHeader(7); //data length - 7 bits
+        for (BlockDataType blockDataArgument : writeBlockDataArguments.keySet()) {
+            if (writeBlockDataArguments.get(blockDataArgument) == true)
+                add2ByteHeader(blockDataArgument.getNumericValue());
         }
 
+
         //Indicate that the rest of the file is for the block data
-        add2ByteHeader(BlockDataTypeID.INVALID.getValue());
+        add2ByteHeader(BlockDataType.INVALID.getNumericValue());
 
 
         //-----DOWNLOAD BLOCKS-----:
@@ -109,31 +114,33 @@ public class MapWriterImpl implements MapWriter {
 
 
     private void downloadBlocks() {
-        CustomDataWriter dataWriter = new CustomDataWriter(file);
+        dataWriter = new CustomDataWriter(file);
+        ConditionalDataHandler.init(dataWriter, null, this);
 
         int airBlocksSkipped = 0;
         for (int x = cornerCoords.getBlockX(); x > cornerCoords.getBlockX() - size.getBlockX(); x--) {
             for (int z = cornerCoords.getBlockZ(); z > cornerCoords.getBlockZ() - size.getBlockZ(); z--) {
                 for (int y = cornerCoords.getBlockY(); y < cornerCoords.getBlockY() + size.getBlockY(); y++) {
+
                     Block block = world.getBlockAt(x, y, z);
                     if (block.getType().isAir()) {
                         airBlocksSkipped++;
                         continue;
                     }
 
-                    else if (airBlocksSkipped > 0) {
-                        dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count
+                    if (airBlocksSkipped > 0) {
+                        dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count. 1 - air blocks
                         dataWriter.writeBits(airBlocksSkipped, 32); //TODO: Optimize this
                         airBlocksSkipped = 0;
                     }
 
-                    writeBlockData(block, dataWriter);
+                    writeBlockData(block);
                 }
             }
         }
 
-        if (airBlocksSkipped > 0) { //If last block is air the loop exits out without writing the data
-            dataWriter.writeBits(1, 1); ///The first bit indicates whether it's a block, or air block count
+        if (airBlocksSkipped > 0) { //Fix for if last block is air the loop exits out without writing the data
+            dataWriter.writeBits(1, 1);
             dataWriter.writeBits(airBlocksSkipped, 32); //TODO: Optimize this
         }
 
@@ -141,28 +148,27 @@ public class MapWriterImpl implements MapWriter {
         dataWriter.writeBytesToFile(); //Write all bytes to file
     }
 
-    private void writeBlockData(Block block, CustomDataWriter dataWriter) {
-        /**
-         * block data:
-         * type: 11 bits
-         * biome: 7 bits
-         */
+    private void writeBlockData(Block block) {
+        dataWriter.writeBits(0, 1); //The first bit indicates whether it's a block, or air block count. 0 - blocks
 
-        dataWriter.writeBits(0, 1); //The first bit indicates whether it's a block, or air block count
-
-        //Type: (11 bits)
-        Material material = block.getType();
-        int typeInt = Arrays.stream(Material.values()).toList().indexOf(material);
+        //Type - Required (11 bits)
+        Material type = block.getType();
+        int typeInt = Arrays.stream(Material.values()).toList().indexOf(type);
         dataWriter.writeBits(typeInt, 11);
 
-        //Biome: (7 bits)
-        if (downloadBlockBiome) {
-            Biome biome = block.getBiome();
-            int biomeInt = Arrays.stream(Biome.values()).toList().indexOf(biome);
-            dataWriter.writeBits(biomeInt, 7);
-        }
+        //Optional arguments:
+        writeBlockBiome(block);
+
+
+        ConditionalDataHandler.writeConditionalData(block);
     }
 
+    private void writeBlockBiome(Block block) {
+        if (!writeBlockDataArguments.containsKey(BlockDataType.BIOME)) return;
+        Biome biome = block.getBiome();
+        int biomeInt = Arrays.stream(Biome.values()).toList().indexOf(biome);
+        dataWriter.writeBits(biomeInt, 7);
+    }
     private void add2ByteHeader(int headerValue) {
         byte[] header = new byte[2]; //the header in bytes, represented by 2 bytes. Big endian
         header[1] = (byte) (headerValue & 0xFF); // least significant byte

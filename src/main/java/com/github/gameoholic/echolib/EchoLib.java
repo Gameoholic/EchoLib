@@ -45,12 +45,12 @@ public final class EchoLib extends JavaPlugin implements Listener {
         //MapDownloader mapDownloader = new MapDownloaderBuilder("Map name", "This is the map's description. I like cheese, actually, nah.", Bukkit.getWorlds().get(0), new Vector(0, 200, 0), new Vector(5, 5, 5)).build();
         //mapDownloader.download();
 
-        ReplayMap mapReader = new ReplayMapBuilder(
-            UUID.fromString("90a940e5-df2d-4098-bd5a-e7c2599be466")
-        )
-            .build();
-
-        mapReader.read();
+//        ReplayMap mapReader = new ReplayMapBuilder(
+//            UUID.fromString("90a940e5-df2d-4098-bd5a-e7c2599be466")
+//        )
+//            .build();
+//
+//        mapReader.load();
 
 
     }

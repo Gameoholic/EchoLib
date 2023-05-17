@@ -4,5 +4,5 @@ public interface ReplayMap {
     /**
      Starts reading the map.
      */
-    void read();
+    void load();
 }

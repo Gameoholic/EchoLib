@@ -6,11 +6,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.type.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class ReplayMapImpl implements ReplayMap {
@@ -30,14 +34,25 @@ public class ReplayMapImpl implements ReplayMap {
     private int sizeX;
     private int sizeY;
     private int sizeZ;
+
+    //Which conditional/optional block data to read:
+    private HashMap<BlockDataType, Boolean> readBlockDataArguments;
+    public HashMap<BlockDataType, Boolean> getReadBlockDataArguments() {
+        return readBlockDataArguments;
+    }
+
+    //Current coordinates for block placement iteration:
+    private int currentX;
+    private int currentY;
+    private int currentZ;
     public ReplayMapImpl(UUID id) {
         this.id = id;
-
     }
 
 
     @Override
-    public void read() {
+    public void load() {
+        ConditionalDataHandler.init(null, this, null);
         //Get the file
         file = new File(EchoLib.plugin.getDataFolder(), String.format("data/maps/%s.echomap", id));
         try {
@@ -47,17 +62,16 @@ public class ReplayMapImpl implements ReplayMap {
         }
 
         //Read headers:
-
         currentByte = 0;
 
         //Version:
-        int version = readIntegerFromFile(2);
+        int version = readBytesFromFile(2);
         if (version != EchoLib.mapFileVersion) {
             throw new RuntimeException("Map file is on version " + version + ", latest is " + EchoLib.mapFileVersion);
         }
 
         //Map name:
-        int nameSize = readIntegerFromFile(2);
+        int nameSize = readBytesFromFile(2);
 
         byte[] nameBytes = new byte[nameSize];
         for (int i = 0; i < nameSize; i++) {
@@ -66,7 +80,7 @@ public class ReplayMapImpl implements ReplayMap {
         String name = readStringFromFile(nameBytes);
 
         //Map description:
-        int descriptionSize = readIntegerFromFile(2);
+        int descriptionSize = readBytesFromFile(2);
 
         byte[] descriptionBytes = new byte[descriptionSize];
         for (int i = 0; i < descriptionSize; i++) {
@@ -76,77 +90,94 @@ public class ReplayMapImpl implements ReplayMap {
 
 
         //Corner coords (X,Y,Z are integers):
-        cornerCoordsX = readIntegerFromFile(4);
-        cornerCoordsY = readIntegerFromFile(4);
-        cornerCoordsZ = readIntegerFromFile(4);
+        cornerCoordsX = readBytesFromFile(4);
+        cornerCoordsY = readBytesFromFile(4);
+        cornerCoordsZ = readBytesFromFile(4);
 
         //Size (X,Y,Z are integers):
-        sizeX = readIntegerFromFile(4);
-        sizeY = readIntegerFromFile(4);
-        sizeZ = readIntegerFromFile(4);
+        sizeX = readBytesFromFile(4);
+        sizeY = readBytesFromFile(4);
+        sizeZ = readBytesFromFile(4);
 
-        //Block data headers, describes how the data for each block is structured:
-        //2 bytes - datatype ID, 2 bytes - length in bits
+        //Block data headers, 2 bytes each - datatype ID:
+        readBlockDataArguments = new HashMap<>();
+        for (BlockDataType blockDataTypeID : BlockDataType.values()) {
+            if (blockDataTypeID == BlockDataType.INVALID) continue;
+            readBlockDataArguments.put(blockDataTypeID, false);
+        }
 
-        //0 - type
-        //1 - biome
-        //0xFF - marks end of block data structure headers
-
+        //If block data argument ID exists in file - add it to readBlockDataArguments
         int dataTypeID;
-        int dataLength;
         do {
-            dataTypeID = readIntegerFromFile(2);
-            if (dataTypeID == BlockDataTypeID.INVALID.getValue())
+            dataTypeID = readBytesFromFile(2);
+            if (dataTypeID == BlockDataType.INVALID.getNumericValue())
                 break;
-            dataLength = readIntegerFromFile(2);
-
-            //Type:
-            if (dataTypeID == BlockDataTypeID.TYPE.getValue()) {
-                System.out.println("type has " + dataLength + " bits");
-            }
-            //Biome:
-            else if (dataTypeID == BlockDataTypeID.BIOME.getValue()) {
-                System.out.println("biome has " + dataLength + " bits");
-            }
-
-        } while (dataTypeID != BlockDataTypeID.INVALID.getValue());
-
+            else
+                for (BlockDataType blockDataTypeID : BlockDataType.values()) {
+                    if (blockDataTypeID.getNumericValue() == dataTypeID) {
+                        readBlockDataArguments.put(blockDataTypeID, true);
+                        break;
+                    }
+                }
+        } while (dataTypeID != BlockDataType.INVALID.getNumericValue());
 
 
         currentX = 0;
         currentY = 0;
         currentZ = 0;
-        //Read blocks:
-        while (currentByte < bytes.length - 1) { //Will continue reading until the last byte was reached (even if notall the bits were read)
-            readBlockData();
 
+        //Read blocks:
+        while (currentByte < bytes.length - 1) { //Will continue reading until the last byte was reached (even if notall the bits were read) Alteranatively, can check whether currentX >= sizeX
+            readBlockData();
         }
         Bukkit.broadcastMessage("Finished");
 
     }
 
-    private int currentX;
-    private int currentY;
-    private int currentZ;
 
     private void readBlockData() {
-        Boolean isBlock = readBitsFromFile(1) == 0; //The first bit indicates whether it's a block, or air block count
-        if (isBlock) {
-            Material type = Material.values()[readBitsFromFile(11)];
-            System.out.println("Block type " + type + " is of biome " + Biome.values()[readBitsFromFile(7)]);
-            Bukkit.getWorlds().get(0).getBlockAt(cornerCoordsX - currentX, cornerCoordsY + currentY, cornerCoordsZ - currentZ).setType(type);
-            incrementBlocks(1);
+        Boolean isBlock = readBitsFromFile(1) == 0; //The first bit indicates whether it's a block, or air block count. 0 - block
+
+        if (!isBlock) {
+            int airBlocks = readBitsFromFile(32);
+            incrementBlocks(airBlocks);
+            return;
+        }
+
+        Block block = Bukkit.getWorlds().get(0).getBlockAt(cornerCoordsX - currentX, cornerCoordsY + currentY, cornerCoordsZ - currentZ);
+
+
+
+        Material type = Material.values()[readBitsFromFile(11)];
+        Biome biome = null;
+
+        //Optional block data:
+        if (readBlockDataArguments.get(BlockDataType.BIOME))
+            biome = Biome.values()[readBitsFromFile(7)];
+
+        BlockData typeBlockData = type.createBlockData(); //the default block data for the type
+        //Required block data:
+        if (typeBlockData instanceof Bisected || typeBlockData instanceof Bed || typeBlockData instanceof Door) {
+            block.setType(type, false);
         }
         else {
-            int airBlocks = readBitsFromFile(32);
-            System.out.println("Blocks of air are " + airBlocks);
-            incrementBlocks(airBlocks);
+            block.setType(type);
         }
 
-//test
+        //Optional block data:
+        if (biome != null)
+            block.setBiome(biome);
 
+        //Conditional block data:
+        ConditionalDataHandler.ReadConditionalData(block, type.createBlockData());
+
+        incrementBlocks(1);
     }
+
+    //Increments the amount of the blocks iterated by x amount of blocks
     private void incrementBlocks(int x) {
+        //Block loading is like this:
+        //For every X value, you go over every Z value, and for every Z value you go over every Y value
         for (int i = 0; i < x; i++) {
             currentY += 1;
             if (currentY >= sizeY) {
@@ -158,11 +189,11 @@ public class ReplayMapImpl implements ReplayMap {
                 currentX += 1;
             }
             if (currentX >= sizeX) {
-                System.out.println("Finished reading.");
+                Bukkit.broadcastMessage("Finished reading.");
             }
         }
     }
-    private int readBitsFromFile(int bitsAmount) {
+    int readBitsFromFile(int bitsAmount) {
         int result = 0;
         byte b = bytes[currentByte];
 
@@ -190,7 +221,7 @@ public class ReplayMapImpl implements ReplayMap {
 
         return result;
     }
-    private int readIntegerFromFile(int bytesLength) {
+    public int readBytesFromFile(int bytesLength) {
         int value = bytes[currentByte] & 0xFF; //Make sure if it's a negative value the most significant bit isn't extended
         for (int i = 1; i < bytesLength; i++) {
             value = value << 8;

@@ -1,5 +1,7 @@
 package com.github.gameoholic.echolib.echo.maps;
 
+import org.bukkit.Bukkit;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,6 +29,7 @@ public class CustomDataWriter {
      writeBits(1, 1); // Will write 1 to the file.
      Upon writing this data to the file, the file will look like this: 10110000
      */
+
     public void writeBits(int input, int amount) {
         int bitsRemain = amount;
         for (int i = amount; i >= 1; i--) {

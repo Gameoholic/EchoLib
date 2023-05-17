@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   `java-library`
@@ -21,10 +20,14 @@ dependencies {
   // paperweight.foliaDevBundle("1.19.4-R0.1-SNAPSHOT")
   // paperweight.devBundle("com.example.paperfork", "1.19.4-R0.1-SNAPSHOT")
   implementation(kotlin("stdlib-jdk8"))
+  //implementation("org.jetbrains.kotlin:kotlin-stdlib:1.8.0")
 }
 
 
 tasks {
+
+
+
   // Configure reobfJar to run when invoking the build task
   assemble {
     dependsOn(reobfJar)
@@ -63,12 +66,4 @@ tasks {
 
 repositories {
   mavenCentral()
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-  jvmTarget = "1.8"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-  jvmTarget = "1.8"
 }

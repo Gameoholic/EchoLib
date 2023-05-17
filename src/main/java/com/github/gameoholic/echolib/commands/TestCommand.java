@@ -5,10 +5,13 @@ import com.github.gameoholic.echolib.maps.MapWriter;
 import com.github.gameoholic.echolib.maps.MapWriterBuilder;
 import com.github.gameoholic.echolib.maps.ReplayMap;
 import com.github.gameoholic.echolib.maps.ReplayMapBuilder;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Bed;
+import org.bukkit.block.data.type.Door;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -53,13 +56,37 @@ public class TestCommand implements CommandExecutor {
             mapDownloader.download();
 
         }
-        else {
+        else if (args[0].equals("a")) {
             ReplayMap mapReader = new ReplayMapBuilder(
                 UUID.fromString(args[1])
             )
                 .build();
 
-            mapReader.read();
+            mapReader.load();
+        }
+        else {
+            World world = Bukkit.getWorlds().get(0);
+            Block block0 = world.getBlockAt(41, 83, 79);
+
+            block0.setType(Material.DARK_OAK_DOOR);
+
+            Bukkit.broadcastMessage("0: " + block0.getBlockData());
+            if (block0.getBlockData() instanceof Door) {
+                Bukkit.broadcastMessage("is door");
+                Door bd = (Door) block0.getBlockData();
+                bd.setOpen(true);
+                block0.setBlockData(bd);
+            }
+            Bukkit.broadcastMessage("1: " + block0.getBlockData());
+            if (block0.getBlockData() instanceof Directional) {
+                Bukkit.broadcastMessage("is directional");
+                Directional bd = (Directional) block0.getBlockData();
+                bd.setFacing(BlockFace.WEST);
+                block0.setBlockData(bd);
+            }
+            Bukkit.broadcastMessage("2: " + block0.getBlockData());
+
+
         }
 
 
