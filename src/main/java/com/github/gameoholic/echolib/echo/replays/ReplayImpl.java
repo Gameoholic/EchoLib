@@ -1,7 +1,7 @@
-package com.github.gameoholic.echolib.echo;
+package com.github.gameoholic.echolib.echo.replays;
 
 import com.github.gameoholic.echolib.EchoLib;
-import com.github.gameoholic.echolib.Replay;
+import com.github.gameoholic.echolib.replays.Replay;
 
 import java.util.UUID;
 

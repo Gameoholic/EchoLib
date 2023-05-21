@@ -1,4 +1,4 @@
-package com.github.gameoholic.echolib.echo.maps;
+package com.github.gameoholic.echolib.echo;
 
 import org.bukkit.Bukkit;
 

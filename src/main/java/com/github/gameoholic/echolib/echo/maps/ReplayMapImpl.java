@@ -45,6 +45,8 @@ public class ReplayMapImpl implements ReplayMap {
     private int currentX;
     private int currentY;
     private int currentZ;
+
+    private ConditionalDataHandler conditionalDataHandler;
     public ReplayMapImpl(UUID id) {
         this.id = id;
     }
@@ -52,7 +54,7 @@ public class ReplayMapImpl implements ReplayMap {
 
     @Override
     public void load() {
-        ConditionalDataHandler.init(null, this, null);
+        conditionalDataHandler = new ConditionalDataHandler(this);
         //Get the file
         file = new File(EchoLib.plugin.getDataFolder(), String.format("data/maps/%s.echomap", id));
         try {
@@ -169,7 +171,7 @@ public class ReplayMapImpl implements ReplayMap {
             block.setBiome(biome);
 
         //Conditional block data:
-        ConditionalDataHandler.ReadConditionalData(block, type.createBlockData());
+        conditionalDataHandler.ReadConditionalData(block, type.createBlockData());
 
         incrementBlocks(1);
     }

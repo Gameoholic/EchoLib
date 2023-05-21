@@ -1,4 +1,6 @@
-package com.github.gameoholic.echolib;
+package com.github.gameoholic.echolib.replays;
+
+import com.github.gameoholic.echolib.replays.Replay;
 
 /**
  * Represents an API for accessing and creating Echo replays

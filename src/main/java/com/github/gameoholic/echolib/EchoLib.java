@@ -3,13 +3,11 @@ package com.github.gameoholic.echolib;
 import com.github.gameoholic.echolib.commands.TestCommand;
 import com.github.gameoholic.echolib.listeners.MovementListener;
 import com.github.gameoholic.echolib.listeners.PlayerDeathListener;
-import com.github.gameoholic.echolib.maps.ReplayMap;
-import com.github.gameoholic.echolib.maps.ReplayMapBuilder;
+import com.github.gameoholic.echolib.replays.ReplayManager;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.UUID;
 
 import static net.kyori.adventure.text.Component.text;
 

@@ -1,6 +1,7 @@
 package com.github.gameoholic.echolib.echo.maps;
 
 import com.github.gameoholic.echolib.EchoLib;
+import com.github.gameoholic.echolib.echo.CustomDataWriter;
 import com.github.gameoholic.echolib.maps.MapWriter;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -32,6 +33,7 @@ public class MapWriterImpl implements MapWriter {
     //Private members:
     private File file;
     private CustomDataWriter dataWriter;
+    private ConditionalDataHandler conditionalDataHandler;
     private final int version; //Map file version. Will update only when Map code is changed.
     public MapWriterImpl(String name, String description, World world, Vector cornerCoords, Vector size,
                          HashMap<BlockDataType, Boolean> writeBlockDataArguments) {
@@ -96,7 +98,7 @@ public class MapWriterImpl implements MapWriter {
         writeIntegerToFile(size.getBlockZ());
 
         //Block data headers, describes how the data for each block is structured:
-        //2 bytes - datatype ID, 2 bytes - length in bits
+        //2 bytes - datatype ID
 
         for (BlockDataType blockDataArgument : writeBlockDataArguments.keySet()) {
             if (writeBlockDataArguments.get(blockDataArgument) == true)
@@ -115,7 +117,7 @@ public class MapWriterImpl implements MapWriter {
 
     private void downloadBlocks() {
         dataWriter = new CustomDataWriter(file);
-        ConditionalDataHandler.init(dataWriter, null, this);
+        conditionalDataHandler = new ConditionalDataHandler(dataWriter, this);
 
         int airBlocksSkipped = 0;
         for (int x = cornerCoords.getBlockX(); x > cornerCoords.getBlockX() - size.getBlockX(); x--) {
@@ -160,7 +162,7 @@ public class MapWriterImpl implements MapWriter {
         writeBlockBiome(block);
 
 
-        ConditionalDataHandler.writeConditionalData(block);
+        conditionalDataHandler.writeConditionalData(block);
     }
 
     private void writeBlockBiome(Block block) {

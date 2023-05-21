@@ -1,5 +1,6 @@
 package com.github.gameoholic.echolib.echo.maps;
 
+import com.github.gameoholic.echolib.echo.CustomDataWriter;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.*;
@@ -9,32 +10,32 @@ import java.util.LinkedHashMap;
 import java.util.Arrays;
 
 public class ConditionalDataHandler {
-    private static CustomDataWriter dataWriter;
-    private static ReplayMapImpl mapReader;
-    private static MapWriterImpl mapWriter;
+    private CustomDataWriter dataWriter;
+    private ReplayMapImpl mapReader;
+    private MapWriterImpl mapWriter;
     private static LinkedHashMap<Class<? extends BlockData>, BlockDataType> conditionalBlockDataMappings = new LinkedHashMap<>() {{
         for (BlockDataType blockDataType : BlockDataType.values()) {
             if (blockDataType.isConditional())
                 put(blockDataType.getBlockDataInterface(), blockDataType);
         }
     }}; //Maps block data interfaces to their respective block data type enum
-    public static void init(CustomDataWriter aDataWriter, ReplayMapImpl aMapReader, MapWriterImpl aMapWriter) {
-        if (aDataWriter != null)
-            dataWriter = aDataWriter;
-        if (aMapReader != null)
-            mapReader = aMapReader;
-        if (aMapWriter != null)
-            mapWriter = aMapWriter;
+
+    public ConditionalDataHandler(ReplayMapImpl mapReader) {
+        this.mapReader = mapReader;
     }
-    public static void writeConditionalData(Block block) {
+    public ConditionalDataHandler(CustomDataWriter dataWriter, MapWriterImpl mapWriter) {
+        this.dataWriter = dataWriter;
+        this.mapWriter = mapWriter;
+    }
+    public void writeConditionalData(Block block) {
         for (Class<? extends BlockData> blockDataInterface : conditionalBlockDataMappings.keySet())
             WriteData(blockDataInterface, block);
     }
-    public static void ReadConditionalData(Block block, BlockData defaultBlockData) {
+    public void ReadConditionalData(Block block, BlockData defaultBlockData) {
         for (Class<? extends BlockData> blockDataInterface : conditionalBlockDataMappings.keySet())
             ReadData(blockDataInterface, block, defaultBlockData);
     }
-    private static void WriteData(Class<? extends BlockData> blockDataInterface, Block block) {
+    private void WriteData(Class<? extends BlockData> blockDataInterface, Block block) {
         if (!mapWriter.getWriteBlockDataArguments().get(conditionalBlockDataMappings.get(blockDataInterface)))
             return;
         BlockData blockData = block.getBlockData();
@@ -89,7 +90,7 @@ public class ConditionalDataHandler {
             WriteAttachableData((Attachable) blockData);
     }
 
-    private static void ReadData(Class<? extends BlockData> blockDataInterface, Block block, BlockData defaultBlockData) {
+    private void ReadData(Class<? extends BlockData> blockDataInterface, Block block, BlockData defaultBlockData) {
         if (!mapReader.getReadBlockDataArguments().get(conditionalBlockDataMappings.get(blockDataInterface)))
             return;
         BlockData blockData = defaultBlockData;
@@ -145,7 +146,7 @@ public class ConditionalDataHandler {
 
     }
 
-    private static void WriteCaveVinesPlantData(CaveVinesPlant caveVinesPlant) {
+    private void WriteCaveVinesPlantData(CaveVinesPlant caveVinesPlant) {
         //Get data:
         boolean isBerries = caveVinesPlant.isBerries();
         int isBerriesInt = isBerries ? 1 : 0;
@@ -153,7 +154,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(isBerriesInt, 1);
     }
-    private static void ReadCaveVinesPlantData(Block block, CaveVinesPlant caveVinesPlant) {
+    private void ReadCaveVinesPlantData(Block block, CaveVinesPlant caveVinesPlant) {
         //Read data:
         boolean isBerries = mapReader.readBitsFromFile(1) == 1;
 
@@ -162,14 +163,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(caveVinesPlant);
     }
-    private static void WriteCandleData(Candle candle) {
+    private void WriteCandleData(Candle candle) {
         //Get data:
         int candlesInt = candle.getCandles() - 1; //Values are 1-4, we make them 0-3
 
         //Write data:
         dataWriter.writeBits(candlesInt, 2);
     }
-    private static void ReadCandleData(Block block, Candle candle) {
+    private void ReadCandleData(Block block, Candle candle) {
         //Read data:
         int candles = mapReader.readBitsFromFile(2) + 1;
 
@@ -178,7 +179,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(candle);
     }
-    private static void WriteCampfireData(Campfire campfire) {
+    private void WriteCampfireData(Campfire campfire) {
         //Get data:
         boolean signalFire = campfire.isSignalFire();
         int signalFireInt = signalFire ? 1 : 0;
@@ -186,7 +187,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(signalFireInt, 1);
     }
-    private static void ReadCampfireData(Block block, Campfire campfire) {
+    private void ReadCampfireData(Block block, Campfire campfire) {
         //Read data:
         Boolean signalFire = mapReader.readBitsFromFile(1) == 1;
 
@@ -195,14 +196,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(campfire);
     }
-    private static void WriteCakeData(Cake cake) {
+    private void WriteCakeData(Cake cake) {
         //Get data:
         int bitesInt = cake.getBites();
 
         //Write data:
         dataWriter.writeBits(bitesInt, 3); //0-6
     }
-    private static void ReadCakeData(Block block, Cake cake) {
+    private void ReadCakeData(Block block, Cake cake) {
         //Read data:
         int bites = mapReader.readBitsFromFile(3);
 
@@ -212,7 +213,7 @@ public class ConditionalDataHandler {
         block.setBlockData(cake);
     }
 
-    private static void WriteBubbleColumnData(BubbleColumn bubbleColumn) {
+    private void WriteBubbleColumnData(BubbleColumn bubbleColumn) {
         //Get data:
         boolean drag = bubbleColumn.isDrag();
         int dragInt = drag ? 1 : 0;
@@ -220,7 +221,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(dragInt, 1);
     }
-    private static void ReadBubbleColumnData(Block block, BubbleColumn bubbleColumn) {
+    private void ReadBubbleColumnData(Block block, BubbleColumn bubbleColumn) {
         //Read data:
         Boolean drag = mapReader.readBitsFromFile(1) == 1;
 
@@ -230,7 +231,7 @@ public class ConditionalDataHandler {
         block.setBlockData(bubbleColumn);
     }
 
-    private static void WriteBigDripleafData(BigDripleaf bigDripleaf) {
+    private void WriteBigDripleafData(BigDripleaf bigDripleaf) {
         //Get data:
         BigDripleaf.Tilt tilt = bigDripleaf.getTilt();
         int tiltInt = Arrays.stream(BigDripleaf.Tilt.values()).toList().indexOf(tilt);
@@ -238,7 +239,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(tiltInt, 2);
     }
-    private static void ReadBigDripleafData(Block block, BigDripleaf bigDripleaf) {
+    private void ReadBigDripleafData(Block block, BigDripleaf bigDripleaf) {
         //Read data:
         BigDripleaf.Tilt tilt = BigDripleaf.Tilt.values()[mapReader.readBitsFromFile(2)];
 
@@ -247,7 +248,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(bigDripleaf);
     }
-    private static void WriteBellData(Bell bell) {
+    private void WriteBellData(Bell bell) {
         //Get data:
         Bell.Attachment attachment = bell.getAttachment();
         int attachmentInt = Arrays.stream(Bell.Attachment.values()).toList().indexOf(attachment);
@@ -255,7 +256,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(attachmentInt, 2);
     }
-    private static void ReadBellData(Block block, Bell bell) {
+    private void ReadBellData(Block block, Bell bell) {
         //Read data:
         Bell.Attachment attachment = Bell.Attachment.values()[mapReader.readBitsFromFile(2)];
 
@@ -265,14 +266,14 @@ public class ConditionalDataHandler {
         block.setBlockData(bell);
     }
 
-    private static void WriteBeehiveData(Beehive beehive) {
+    private void WriteBeehiveData(Beehive beehive) {
         //Get data:
         int honeyLevelInt = beehive.getHoneyLevel();
 
         //Write data:
         dataWriter.writeBits(honeyLevelInt, 3); //0-5
     }
-    private static void ReadBeehiveData(Block block, Beehive beehive) {
+    private void ReadBeehiveData(Block block, Beehive beehive) {
         //Read data:
         int honeyLevel = mapReader.readBitsFromFile(3);
 
@@ -281,14 +282,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(beehive);
     }
-    private static void WriteAttachableData(Attachable attachable) {
+    private void WriteAttachableData(Attachable attachable) {
         //Get data:
         int isAttachedInt = attachable.isAttached() ? 1 : 0;
 
         //Write data:
         dataWriter.writeBits(isAttachedInt, 1);
     }
-    private static void ReadAttachableData(Block block, Attachable attachable) {
+    private void ReadAttachableData(Block block, Attachable attachable) {
         //Read data:
         Boolean attached = mapReader.readBitsFromFile(1) == 1;
 
@@ -297,14 +298,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(attachable);
     }
-    private static void WriteAnaloguePowerableData(AnaloguePowerable analoguePowerable) {
+    private void WriteAnaloguePowerableData(AnaloguePowerable analoguePowerable) {
         //Get data:
         int powerInt = analoguePowerable.getPower();
 
         //Write data:
         dataWriter.writeBits(powerInt, 4); //0-15
     }
-    private static void ReadAnaloguePowerableData(Block block, AnaloguePowerable analoguePowerable) {
+    private void ReadAnaloguePowerableData(Block block, AnaloguePowerable analoguePowerable) {
         //Read data:
         int power = mapReader.readBitsFromFile(4);
 
@@ -313,7 +314,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(analoguePowerable);
     }
-    private static void WriteAgeableData(Ageable ageable) { //TODO: this might not work
+    private void WriteAgeableData(Ageable ageable) { //TODO: this might not work
         //Get data:
         int ageInt = ageable.getAge();
 
@@ -329,7 +330,7 @@ public class ConditionalDataHandler {
         else if (ageable instanceof CaveVines) //age between: 0-25 (26 values)
             dataWriter.writeBits(ageInt, 5);
     }
-    private static void ReadAgeableData(Block block, Ageable ageable) { //TODO: this might not work
+    private void ReadAgeableData(Block block, Ageable ageable) { //TODO: this might not work
         //Read data:
         int age;
         if (ageable instanceof Bamboo) //age between: 0-1 (2 values)
@@ -350,14 +351,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(ageable);
     }
-    private static void WritePowerableData(Powerable powerable) {
+    private void WritePowerableData(Powerable powerable) {
         //Get data:
         int isPoweredInt = powerable.isPowered() ? 1 : 0;
 
         //Write data:
         dataWriter.writeBits(isPoweredInt, 1);
     }
-    private static void ReadPowerableData(Block block, Powerable powerable) {
+    private void ReadPowerableData(Block block, Powerable powerable) {
         //Read data:
         Boolean isPowered = mapReader.readBitsFromFile(1) == 1;
 
@@ -366,14 +367,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(powerable);
     }
-    private static void WriteWaterloggedData(Waterlogged waterlogged) {
+    private void WriteWaterloggedData(Waterlogged waterlogged) {
         //Get data:
         int isWaterloggedInt = waterlogged.isWaterlogged() ? 1 : 0;
 
         //Write data:
         dataWriter.writeBits(isWaterloggedInt, 1);
     }
-    private static void ReadWaterloggedData(Block block, Waterlogged waterlogged) {
+    private void ReadWaterloggedData(Block block, Waterlogged waterlogged) {
         //Read data:
         Boolean isWaterlogged = mapReader.readBitsFromFile(1) == 1;
 
@@ -382,7 +383,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(waterlogged);
     }
-    private static void WriteBisectedData(Bisected bisected) {
+    private void WriteBisectedData(Bisected bisected) {
         //Get data:
         Bisected.Half half = bisected.getHalf();
         int halfInt = Arrays.stream(Bisected.Half.values()).toList().indexOf(half);
@@ -390,7 +391,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(halfInt, 1);
     }
-    private static void ReadBisectedData(Block block, Bisected bisected) {
+    private void ReadBisectedData(Block block, Bisected bisected) {
         //Read data:
         Bisected.Half half = Bisected.Half.values()[mapReader.readBitsFromFile(1)];
 
@@ -399,7 +400,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(bisected);
     }
-    private static void WriteDoorData(Door door) {
+    private void WriteDoorData(Door door) {
         //Get data:
         Door.Hinge doorHinge = door.getHinge();
         int doorHingeInt = Arrays.stream(Door.Hinge.values()).toList().indexOf(doorHinge);
@@ -407,7 +408,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(doorHingeInt, 1); //2 values, 2^1 = 2
     }
-    private static void ReadDoorData(Block block, Door door) {
+    private void ReadDoorData(Block block, Door door) {
         //Read data:
         Door.Hinge hinge = Door.Hinge.values()[mapReader.readBitsFromFile(1)];
 
@@ -416,14 +417,14 @@ public class ConditionalDataHandler {
 
         block.setBlockData(door);
     }
-    private static void WriteFenceGateData(Gate fenceGate) {
+    private void WriteFenceGateData(Gate fenceGate) {
         //Get data:
         int fenceInWallInt = fenceGate.isInWall() ? 1 : 0;
 
         //Write data:
         dataWriter.writeBits(fenceInWallInt, 1);
     }
-    private static void ReadFenceGateData(Block block, Gate fenceGate) {
+    private void ReadFenceGateData(Block block, Gate fenceGate) {
         //Read data:
         boolean inWall = mapReader.readBitsFromFile(1) == 1;
 
@@ -432,7 +433,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(fenceGate);
     }
-    private static void WriteFenceData(Fence fence) {
+    private void WriteFenceData(Fence fence) {
         //Get data:
         int fenceEastInt = fence.getFaces().contains(BlockFace.EAST) ? 1 : 0;
         int fenceWestInt = fence.getFaces().contains(BlockFace.WEST) ? 1 : 0;
@@ -445,7 +446,7 @@ public class ConditionalDataHandler {
         dataWriter.writeBits(fenceSouthInt, 1);
         dataWriter.writeBits(fenceNorthInt, 1);
     }
-    private static void ReadFenceData(Block block, Fence fence) {
+    private void ReadFenceData(Block block, Fence fence) {
         //Read data:
         boolean fenceEast = mapReader.readBitsFromFile(1) == 1;
         boolean fenceWest = mapReader.readBitsFromFile(1) == 1;
@@ -460,7 +461,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(fence);
     }
-    private static void WriteSlabData(Slab slab) {
+    private void WriteSlabData(Slab slab) {
         //Get data:
         Slab.Type slabType = slab.getType();
 
@@ -470,7 +471,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(slabTypeInt, 2); //3 values, 2^2 = 4 bits
     }
-    private static void ReadSlabData(Block block, Slab slab) {
+    private void ReadSlabData(Block block, Slab slab) {
         //Read data:
         Slab.Type slabType = Slab.Type.values()[mapReader.readBitsFromFile(2)];
 
@@ -479,7 +480,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(slab);
     }
-    private static void WriteBambooData(Bamboo bamboo) {
+    private void WriteBambooData(Bamboo bamboo) {
         //Get data:
         Bamboo.Leaves leaves = bamboo.getLeaves();
         int leavesInt = Arrays.stream(Bamboo.Leaves.values()).toList().indexOf(leaves);
@@ -489,7 +490,7 @@ public class ConditionalDataHandler {
         dataWriter.writeBits(leavesInt, 2); //3 values, 2^2 = 4 bits
         dataWriter.writeBits(stageInt, 1); //2 values: 0/1
     }
-    private static void ReadBambooData(Block block, Bamboo bamboo) {
+    private void ReadBambooData(Block block, Bamboo bamboo) {
         //Read data:
         Bamboo.Leaves leaves = Bamboo.Leaves.values()[mapReader.readBitsFromFile(2)];
         int stage = mapReader.readBitsFromFile(1);
@@ -500,7 +501,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(bamboo);
     }
-    private static void WriteBedData(Bed bed) {
+    private void WriteBedData(Bed bed) {
         //Get data:
         Bed.Part bedPart = bed.getPart();
 
@@ -510,7 +511,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(bedPartInt, 1);
     }
-    private static void ReadBedData(Block block, Bed bed) {
+    private void ReadBedData(Block block, Bed bed) {
         //Read data:
         Bed.Part bedPart = Bed.Part.values()[mapReader.readBitsFromFile(1)];
 
@@ -519,7 +520,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(bed);
     }
-    private static void WriteRailData(Rail rail) {
+    private void WriteRailData(Rail rail) {
         //Get data:
         Rail.Shape railShape = rail.getShape();
         int railShapeInt = Arrays.stream(Rail.Shape.values()).toList().indexOf(railShape);
@@ -527,7 +528,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(railShapeInt, 4);
     }
-    private static void ReadRailData(Block block, Rail rail) {
+    private void ReadRailData(Block block, Rail rail) {
         //Read data:
         Rail.Shape railShape = Rail.Shape.values()[mapReader.readBitsFromFile(4)];
 
@@ -536,7 +537,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(rail);
     }
-    private static void WriteStairsData(Stairs stairs) {
+    private void WriteStairsData(Stairs stairs) {
         //Get data:
         Stairs.Shape stairsShape = stairs.getShape();
         int stairsShapeInt = Arrays.stream(Stairs.Shape.values()).toList().indexOf(stairsShape);
@@ -544,7 +545,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(stairsShapeInt, 3);
     }
-    private static void ReadStairsData(Block block, Stairs stairs) {
+    private void ReadStairsData(Block block, Stairs stairs) {
         //Read data:
         Stairs.Shape stairsShape = Stairs.Shape.values()[mapReader.readBitsFromFile(3)];
 
@@ -553,7 +554,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(stairs);
     }
-    private static void WriteFaceData(Directional directionalBlock) {
+    private void WriteFaceData(Directional directionalBlock) {
         //Get data:
         BlockFace blockFace = directionalBlock.getFacing();
 
@@ -563,7 +564,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(blockFaceInt, 5);
     }
-    private static void ReadFaceData(Block block, Directional directionalBlock) {
+    private void ReadFaceData(Block block, Directional directionalBlock) {
         //Read data:
         BlockFace blockFace = BlockFace.values()[mapReader.readBitsFromFile(5)];
 
@@ -572,7 +573,7 @@ public class ConditionalDataHandler {
 
         block.setBlockData(directionalBlock);
     }
-    private static void WriteWallData(Wall wall) {
+    private void WriteWallData(Wall wall) {
         //Get data:
         Boolean wallIsUp = wall.isUp();
         Wall.Height wallHeightEast = wall.getHeight(BlockFace.EAST);
@@ -594,7 +595,7 @@ public class ConditionalDataHandler {
         dataWriter.writeBits(wallHeightNorthInt, 2);
         dataWriter.writeBits(wallHeightSouthInt, 2);
     }
-    private static void ReadWallData(Block block, Wall wall) {
+    private void ReadWallData(Block block, Wall wall) {
         //Read data:
         Boolean wallIsUp = mapReader.readBitsFromFile(1) == 1;
         Wall.Height wallHeightEast = Wall.Height.values()[mapReader.readBitsFromFile(2)];
@@ -612,7 +613,7 @@ public class ConditionalDataHandler {
         block.setBlockData(wall);
     }
 
-    private static void WriteOpenableData(Openable openable) {
+    private void WriteOpenableData(Openable openable) {
         //Get data:
         Boolean isOpen = openable.isOpen();
         int isOpenInt = isOpen ? 1 : 0;
@@ -620,7 +621,7 @@ public class ConditionalDataHandler {
         //Write data:
         dataWriter.writeBits(isOpenInt, 1);
     }
-    private static void ReadOpenableData(Block block, Openable openable) {
+    private void ReadOpenableData(Block block, Openable openable) {
         //Read data:
         Boolean isOpen = mapReader.readBitsFromFile(1) == 1;
 

@@ -1,4 +1,4 @@
-package com.github.gameoholic.echolib;
+package com.github.gameoholic.echolib.replays;
 
 import java.util.UUID;
 

@@ -1,6 +1,6 @@
-package com.github.gameoholic.echolib;
+package com.github.gameoholic.echolib.replays;
 
-import com.github.gameoholic.echolib.echo.ReplayImpl;
+import com.github.gameoholic.echolib.echo.replays.ReplayImpl;
 
 public class ReplayBuilder {
     //Required attributes:
